@@ -55,86 +55,91 @@
             </div>
         </nav>
 
-        <div class="main-content">
-            <!-- Estadísticas -->
-            <div class="stats-grid">
-                <div class="stat-card principal">
-                    <div class="stat-label">Balance Actual</div>
-                    <div class="stat-valor valor-neutro" id="balance-valor">$0</div>
+        <div class="app-container">
+            <!-- Sidebar Izquierdo: Historial -->
+            <aside class="sidebar-historial">
+                <div class="sidebar-header">
+                    <p class="card-title" style="margin:0; border:none; padding:0;">📋 Historial</p>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🏦</div>
-                    <div class="stat-label">Presupuesto</div>
-                    <div class="stat-valor" id="presupuesto-valor">$0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📈</div>
-                    <div class="stat-label">Ingresos</div>
-                    <div class="stat-valor valor-positivo" id="total-ingresos">$0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📉</div>
-                    <div class="stat-label">Gastos</div>
-                    <div class="stat-valor valor-negativo" id="total-gastos">$0</div>
-                </div>
-            </div>
-
-            <!-- Barra de Presupuesto -->
-            <div class="card" id="card-progreso" style="display:none;">
-                <div class="progreso-header">
-                    <span class="card-title" style="margin:0; border:none; padding:0;">💰 Presupuesto Disponible</span>
-                    <span class="progreso-restante" id="progreso-restante-label">$0 restantes</span>
-                </div>
-                <div class="barra-container">
-                    <div class="barra-fill" id="barra-fill"></div>
-                </div>
-                <div class="progreso-footer">
-                    <span id="progreso-pct">0% usado</span>
-                    <span id="progreso-total"></span>
-                </div>
-            </div>
-
-            <!-- Configuración -->
-            <div class="card">
-                <p class="card-title">⚙ Configuración</p>
-                <div class="form-row-presupuesto">
-                    <div style="flex:1">
-                        <input type="text" id="input-presupuesto" placeholder="Ej: 50000" inputmode="decimal">
-                        <small class="input-hint">Ingresá el monto sin puntos de miles (ej: 5000)</small>
-                    </div>
-                    <button class="btn-secondary" id="btn-guardar-presupuesto">Guardar</button>
-                </div>
-                <button class="btn-danger-outline" id="btn-reiniciar-todo">🗑 Borrar todos mis datos</button>
-            </div>
-
-            <!-- Formulario -->
-            <div class="card">
-                <p class="card-title">＋ Nueva Transacción</p>
-                <form id="formulario-gastos">
-                    <div class="form-row">
-                        <input type="text" id="input-descripcion" placeholder="Descripción (ej: Supermercado)">
-                    </div>
-                    <div class="form-row form-row-2">
-                        <div>
-                            <input type="text" id="input-monto" placeholder="Ej: 1250.50" inputmode="decimal">
-                            <small class="input-hint">Usá solo números (punto para decimales)</small>
-                        </div>
-                        <select id="select-tipo">
-                            <option value="gasto">💸 Gasto</option>
-                            <option value="ingreso">💰 Ingreso</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-primary">Registrar Movimiento</button>
-                </form>
-            </div>
-
-            <!-- Historial -->
-            <div class="card">
-                <p class="card-title">📋 Historial de Movimientos</p>
                 <div class="history-list" id="contenedor-transacciones">
                     <!-- Dinámico desde JS -->
                 </div>
-            </div>
+            </aside>
+
+            <!-- Contenido Principal: Stats y Form -->
+            <main class="main-content">
+                <!-- Estadísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card principal">
+                        <div class="stat-label">Balance Actual</div>
+                        <div class="stat-valor valor-neutro" id="balance-valor">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏦</div>
+                        <div class="stat-label">Presupuesto</div>
+                        <div class="stat-valor" id="presupuesto-valor">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-label">Ingresos</div>
+                        <div class="stat-valor valor-positivo" id="total-ingresos">$0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📉</div>
+                        <div class="stat-label">Gastos</div>
+                        <div class="stat-valor valor-negativo" id="total-gastos">$0</div>
+                    </div>
+                </div>
+
+                <!-- Barra de Presupuesto -->
+                <div class="card" id="card-progreso" style="display:none;">
+                    <div class="progreso-header">
+                        <span class="card-title" style="margin:0; border:none; padding:0;">💰 Presupuesto Disponible</span>
+                        <span class="progreso-restante" id="progreso-restante-label">$0 restantes</span>
+                    </div>
+                    <div class="barra-container">
+                        <div class="barra-fill" id="barra-fill"></div>
+                    </div>
+                    <div class="progreso-footer">
+                        <span id="progreso-pct">0% usado</span>
+                        <span id="progreso-total"></span>
+                    </div>
+                </div>
+
+                <!-- Formulario -->
+                <div class="card">
+                    <p class="card-title">＋ Nueva Transacción</p>
+                    <form id="formulario-gastos">
+                        <div class="form-row">
+                            <input type="text" id="input-descripcion" placeholder="Descripción (ej: Supermercado)">
+                        </div>
+                        <div class="form-row form-row-2">
+                            <div>
+                                <input type="text" id="input-monto" placeholder="Ej: 1250.50" inputmode="decimal">
+                                <small class="input-hint">Usá solo números (punto para decimales)</small>
+                            </div>
+                            <select id="select-tipo">
+                                <option value="gasto">💸 Gasto</option>
+                                <option value="ingreso">💰 Ingreso</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary">Registrar Movimiento</button>
+                    </form>
+                </div>
+
+                <!-- Configuración -->
+                <div class="card">
+                    <p class="card-title">⚙ Configuración</p>
+                    <div class="form-row-presupuesto">
+                        <div style="flex:1">
+                            <input type="text" id="input-presupuesto" placeholder="Ej: 50000" inputmode="decimal">
+                            <small class="input-hint">Ingresá el monto sin puntos de miles (ej: 5000)</small>
+                        </div>
+                        <button class="btn-secondary" id="btn-guardar-presupuesto">Guardar</button>
+                    </div>
+                    <button class="btn-danger-outline" id="btn-reiniciar-todo">🗑 Borrar todos mis datos</button>
+                </div>
+            </main>
         </div>
     </div>
 

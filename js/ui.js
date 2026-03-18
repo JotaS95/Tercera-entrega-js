@@ -122,7 +122,7 @@ const UIManager = {
         return porcentajeUsado;
     },
 
-    // Renderizar historial agrupado por día
+    // Renderizar historial agrupado por Mes -> Día
     renderizarLista(transacciones, onEliminar) {
         const contenedor = document.getElementById("contenedor-transacciones");
         if (!contenedor) return;
@@ -141,47 +141,91 @@ const UIManager = {
         // Ordenar del más reciente al más antiguo
         const ordenadas = [...transacciones].sort((a, b) => b.id - a.id);
 
-        // Agrupar por día
-        const grupos = {};
+        // Agrupar jerárquicamente: Mes -> Día -> Items
+        const meses = {};
+        
         ordenadas.forEach(t => {
-            const clave = this.claveDelDia(t.id);
-            if (!grupos[clave]) grupos[clave] = { timestamp: t.id, items: [] };
-            grupos[clave].items.push(t);
+            const fecha = new Date(t.id);
+            const claveMes = `${fecha.getFullYear()}-${fecha.getMonth()}`;
+            // Formato: "marzo 2026"
+            const nombreMes = fecha.toLocaleString("es-AR", { month: "long", year: "numeric" });
+            
+            if (!meses[claveMes]) {
+                meses[claveMes] = { nombre: nombreMes, dias: {} };
+            }
+
+            const claveDia = this.claveDelDia(t.id);
+            if (!meses[claveMes].dias[claveDia]) {
+                meses[claveMes].dias[claveDia] = { timestamp: t.id, items: [] };
+            }
+            meses[claveMes].dias[claveDia].items.push(t);
         });
 
-        // Renderizar cada grupo
-        for (const clave in grupos) {
-            const grupo = grupos[clave];
+        // Renderizar Meses
+        Object.keys(meses).forEach((claveMes, index) => {
+            const mes = meses[claveMes];
+            
+            const mesBlock = document.createElement("div");
+            mesBlock.className = "mes-grupo";
+            
+            // Header del Mes (Carpeta)
+            const mesHeader = document.createElement("div");
+            // El más reciente (index 0) empieza abierto
+            mesHeader.className = `mes-header ${index === 0 ? "abierto" : "cerrado"}`;
+            mesHeader.innerHTML = `
+                <span>${mes.nombre}</span>
+                <span class="toggle-icon">▼</span>
+            `;
+            
+            const mesContenido = document.createElement("div");
+            mesContenido.className = "mes-contenido";
+            
+            // Evento colapsar
+            mesHeader.onclick = () => {
+                const isCerrado = mesHeader.classList.contains("cerrado");
+                mesHeader.classList.toggle("cerrado", !isCerrado);
+                mesHeader.classList.toggle("abierto", isCerrado);
+            };
 
-            // Encabezado del día
-            const header = document.createElement("div");
-            header.className = "dia-header";
-            header.innerHTML = `<span class="dia-label">📅 ${this.formatearFecha(grupo.timestamp)}</span>`;
-            contenedor.appendChild(header);
+            // Renderizar Días dentro del Mes
+            Object.keys(mes.dias).forEach(claveDia => {
+                const grupoDia = mes.dias[claveDia];
 
-            // Transacciones del día
-            grupo.items.forEach(t => {
-                const div = document.createElement("div");
-                div.className = `mov-card ${t.tipo}`;
-                const emoji = t.tipo === "gasto" ? "📉" : "📈";
-                const signo = t.tipo === "gasto" ? "−" : "+";
+                // Fila del Día
+                const diaHeader = document.createElement("div");
+                diaHeader.className = "dia-header";
+                diaHeader.innerHTML = `<span class="dia-label">📅 ${this.formatearFecha(grupoDia.timestamp)}</span>`;
+                mesContenido.appendChild(diaHeader);
 
-                div.innerHTML = `
-                    <div class="mov-icon">${emoji}</div>
-                    <div class="mov-info">
-                        <div class="mov-descripcion">${t.descripcion}</div>
-                        <div class="mov-meta">
-                            <span class="mov-tipo">${t.tipo}</span>
-                            <span class="mov-hora">🕐 ${this.formatearHora(t.id)}</span>
+                // Movimientos
+                grupoDia.items.forEach(t => {
+                    const item = document.createElement("div");
+                    item.className = `history-item ${t.tipo}`;
+                    
+                    const signo = t.tipo === "gasto" ? "-" : "+";
+
+                    item.innerHTML = `
+                        <div class="mov-info">
+                            <span class="mov-desc">${t.descripcion}</span>
+                            <div class="mov-meta">
+                                <span class="mov-tipo">${t.tipo}</span>
+                                <span class="mov-hora">🕐 ${this.formatearHora(t.id)}</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="mov-monto">${signo} ${this.formatearMoneda(t.monto)}</div>
-                    <button class="btn-del" data-id="${t.id}" title="Eliminar">✕</button>
-                `;
-                contenedor.appendChild(div);
-                div.querySelector(".btn-del").onclick = () => onEliminar(t.id);
+                        <div class="mov-acciones">
+                            <span class="mov-monto">${signo}${this.formatearMoneda(t.monto)}</span>
+                            <button class="btn-del" title="Eliminar fila">✕</button>
+                        </div>
+                    `;
+                    item.querySelector(".btn-del").onclick = () => onEliminar(t.id);
+                    mesContenido.appendChild(item);
+                });
             });
-        }
+
+            mesBlock.appendChild(mesHeader);
+            mesBlock.appendChild(mesContenido);
+            contenedor.appendChild(mesBlock);
+        });
     },
 
     notificar(mensaje, tipo = "success") {

@@ -219,11 +219,45 @@ body {
 }
 .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
 
-/* ===== CONTENIDO ===== */
+/* ===== LAYOUT DE 2 COLUMNAS ===== */
+.app-container {
+    display: flex;
+    min-height: calc(100vh - 65px);
+    background: var(--bg);
+}
+
+/* ===== SIDEBAR IZQUIERDO: HISTORIAL ===== */
+.sidebar-historial {
+    width: 320px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 65px);
+    position: sticky;
+    top: 65px;
+    z-index: 40;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.sidebar-historial .history-list {
+    padding: 16px;
+}
+
+/* ===== CONTENIDO PRINCIPAL ===== */
 .main-content {
-    max-width: 660px;
-    margin: 0 auto;
-    padding: 28px 20px 60px;
+    flex: 1;
+    padding: 28px 40px 60px;
+    overflow-y: auto;
 }
 
 /* ===== STATS ===== */
@@ -402,24 +436,63 @@ input:focus, select:focus {
 .mov-tipo { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .mov-hora { font-size: 0.72rem; color: var(--text-muted); }
 
+/* ===== GRUPOS POR MES (CARPETAS) ===== */
+.mes-grupo {
+    margin-bottom: 16px;
+}
+
+.mes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--primary-light);
+    border-radius: 10px;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+    user-select: none;
+}
+.mes-header:hover { background: #dde3fb; }
+
+.mes-header::before {
+    content: '📁';
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.mes-header.abierto::before {
+    content: '📂';
+}
+
+.mes-header .toggle-icon {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+}
+
+.mes-header.cerrado + .mes-contenido {
+    display: none;
+}
+
 /* ===== ENCABEZADOS DE DÍA ===== */
 .dia-header {
     padding: 6px 0 6px;
-    margin-top: 12px;
-    margin-bottom: 4px;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    border-top: 1px dashed var(--border);
 }
-.dia-header:first-child { margin-top: 0; }
+.dia-header:first-child { margin-top: 0; border-top: none; }
 .dia-label {
-    font-size: 0.78rem;
-    font-weight: 600;
+    font-size: 0.72rem;
+    font-weight: 700;
     text-transform: capitalize;
     color: var(--text-muted);
-    letter-spacing: 0.3px;
-    padding: 4px 10px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 5px;
 }
@@ -485,6 +558,18 @@ input:focus, select:focus {
 }
 
 /* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+    .app-container { flex-direction: column-reverse; }
+    .sidebar-historial { 
+        width: 100%; 
+        height: auto; 
+        position: static; 
+        border-right: none; 
+        border-top: 1px solid var(--border);
+    }
+    .main-content { padding: 24px 20px 40px; }
+}
+
 @media (max-width: 520px) {
     .stats-grid { grid-template-columns: 1fr 1fr; }
     .stat-card.principal { grid-column: span 2; }
