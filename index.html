@@ -91,10 +91,23 @@
                     </div>
                 </div>
 
+
+                <!-- Configuración de Presupuesto -->
+                <div class="card">
+                    <p class="card-title">💰 Definir Presupuesto</p>
+                    <div class="form-row-presupuesto">
+                        <div style="flex:1">
+                            <input type="text" id="input-presupuesto" placeholder="Ej: 50000" inputmode="decimal">
+                            <small class="input-hint">Ingresá el monto sin puntos de miles (ej: 5000)</small>
+                        </div>
+                        <button class="btn-secondary" id="btn-guardar-presupuesto">Guardar</button>
+                    </div>
+                </div>
+
                 <!-- Barra de Presupuesto -->
                 <div class="card" id="card-progreso" style="display:none;">
                     <div class="progreso-header">
-                        <span class="card-title" style="margin:0; border:none; padding:0;">💰 Presupuesto Disponible</span>
+                        <span class="card-title" style="margin:0; border:none; padding:0;">📊 Uso del Presupuesto</span>
                         <span class="progreso-restante" id="progreso-restante-label">$0 restantes</span>
                     </div>
                     <div class="barra-container">
@@ -127,17 +140,10 @@
                     </form>
                 </div>
 
-                <!-- Configuración -->
+                <!-- Acciones Avanzadas -->
                 <div class="card">
-                    <p class="card-title">⚙ Configuración</p>
-                    <div class="form-row-presupuesto">
-                        <div style="flex:1">
-                            <input type="text" id="input-presupuesto" placeholder="Ej: 50000" inputmode="decimal">
-                            <small class="input-hint">Ingresá el monto sin puntos de miles (ej: 5000)</small>
-                        </div>
-                        <button class="btn-secondary" id="btn-guardar-presupuesto">Guardar</button>
-                    </div>
-                    <button class="btn-danger-outline" id="btn-reiniciar-todo">🗑 Borrar todos mis datos</button>
+                    <p class="card-title">⚠️ Zona Peligrosa</p>
+                    <button class="btn-danger-outline" id="btn-reiniciar-todo" style="width: 100%;">🗑 Borrar todos mis datos de esta cuenta</button>
                 </div>
             </main>
         </div>
