@@ -98,7 +98,10 @@
             <div class="card">
                 <p class="card-title">⚙ Configuración</p>
                 <div class="form-row-presupuesto">
-                    <input type="number" id="input-presupuesto" placeholder="Ingresá tu presupuesto base">
+                    <div style="flex:1">
+                        <input type="text" id="input-presupuesto" placeholder="Ej: 50000" inputmode="decimal">
+                        <small class="input-hint">Ingresá el monto sin puntos de miles (ej: 5000)</small>
+                    </div>
                     <button class="btn-secondary" id="btn-guardar-presupuesto">Guardar</button>
                 </div>
                 <button class="btn-danger-outline" id="btn-reiniciar-todo">🗑 Borrar todos mis datos</button>
@@ -112,7 +115,10 @@
                         <input type="text" id="input-descripcion" placeholder="Descripción (ej: Supermercado)">
                     </div>
                     <div class="form-row form-row-2">
-                        <input type="text" id="input-monto" placeholder='Monto (ej: 1500 o 1500,50)' inputmode="decimal">
+                        <div>
+                            <input type="text" id="input-monto" placeholder="Ej: 1250.50" inputmode="decimal">
+                            <small class="input-hint">Usá solo números (punto para decimales)</small>
+                        </div>
                         <select id="select-tipo">
                             <option value="gasto">💸 Gasto</option>
                             <option value="ingreso">💰 Ingreso</option>

@@ -84,7 +84,7 @@ const App = {
         }
 
         if (isNaN(monto) || monto <= 0) {
-            UIManager.notificar("Ingresá un monto válido mayor a 0 (ej: 1500 o 1500,50)", "error");
+            UIManager.notificar("Monto inválido. Ingresá solo números (ej: 1500). No uses puntos para los miles.", "error");
             return;
         }
 
@@ -102,26 +102,26 @@ const App = {
         this.actualizarUI();
     },
 
-    // Normalizar montos argentinos: acepta 1000 / 1000.50 / 1000,50 / 1.000,50
+    // Normalizar montos: acepta 1500 | 1500.50 | 1500,50
     parsearMonto(valor) {
         let raw = String(valor).trim();
-        // Estilo europeo/AR con punto de miles y coma decimal: "1.500,50"
-        if (raw.includes(".") && raw.includes(",")) {
-            raw = raw.replace(/\./g, "").replace(",", ".");
-        }
-        // Solo coma como decimal: "1500,50"
-        else if (raw.includes(",")) {
-            raw = raw.replace(",", ".");
-        }
-        // Solo punto → si es "1.000" (3 dígitos exactos al final) lo trata como miles
-        else if (/^\d+\.\d{3}$/.test(raw)) {
+        // Reemplazamos coma por punto para que JS lo entienda como decimal
+        raw = raw.replace(",", ".");
+        
+        // Si el usuario puso un punto y le siguen exactamente 3 ceros (ej: 1.000)
+        // en Argentina suele ser "mil", pero en JS es "uno".
+        // Vamos a ser proactivos: si sospechamos que quiso poner miles con punto,
+        // lo corregimos, pero el hint ya les avisa que no lo hagan.
+        if (/^\d+\.\d{3}$/.test(raw)) {
+            // Es muy probable que sea un punto de miles (ej: 1.000 o 10.000)
             raw = raw.replace(".", "");
         }
+        
         return parseFloat(raw);
     },
 
     cambiarPresupuesto() {
-        const valor = parseFloat(document.getElementById("input-presupuesto").value);
+        const valor = this.parsearMonto(document.getElementById("input-presupuesto").value);
 
         if (!isNaN(valor) && valor >= 0) {
             this.presupuesto = valor;
