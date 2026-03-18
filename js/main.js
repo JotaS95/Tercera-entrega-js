@@ -2,166 +2,173 @@
  * main.js - Lógica principal y orquestación
  */
 
-// Estado global de la aplicación
 const App = {
+    usuario: null,
     transacciones: [],
     presupuesto: 0,
-    categoriasCargadas: [],
 
     // Inicializar la aplicación
     async iniciar() {
-        console.log("Iniciando Billetera Virtual...");
-        
-        // Cargar datos asíncronos (Fetch con Try-Catch)
+        // Mostrar usuarios existentes en el login
+        const usuarios = StorageManager.obtenerUsuarios();
+        UIManager.renderizarUsuarios(usuarios);
+
+        // Configurar el botón de login
+        document.getElementById("btn-ingresar").onclick = () => this.login();
+
+        // Permitir Enter en el campo de usuario
+        document.getElementById("input-login-usuario").onkeydown = (e) => {
+            if (e.key === "Enter") this.login();
+        };
+    },
+
+    login() {
+        const input = document.getElementById("input-login-usuario");
+        const nombre = input.value.trim();
+
+        if (nombre === "") {
+            UIManager.notificar("Ingresá tu nombre para continuar", "error");
+            return;
+        }
+
+        this.usuario = nombre;
+        StorageManager.registrarUsuario(nombre);
+
+        // Cargar datos del usuario
+        this.cargarDatosUsuario();
+    },
+
+    async cargarDatosUsuario() {
+        // Cargar datos asíncronos + datos del storage
         await this.cargarCategorias();
 
-        // Cargar datos de Storage
-        this.transacciones = StorageManager.obtenerTransacciones();
-        this.presupuesto = StorageManager.obtenerPresupuesto();
+        this.transacciones = StorageManager.obtenerTransacciones(this.usuario);
+        this.presupuesto = StorageManager.obtenerPresupuesto(this.usuario);
 
-        // Configurar Event Listeners
+        // Mostrar la app
+        UIManager.mostrarApp(this.usuario);
+        UIManager.notificar(`¡Bienvenido, ${this.usuario}!`, "info");
+
+        // Configurar eventos
         this.configurarEventos();
-
-        // Renderizar estado inicial
         this.actualizarUI();
     },
 
-    // Cargar categorías desde JSON local
     async cargarCategorias() {
         try {
             const respuesta = await fetch("data/transacciones.json");
-            if (!respuesta.ok) throw new Error("No se pudo cargar el archivo de datos");
-            
-            this.categoriasCargadas = await respuesta.json();
-            console.log("Categorías cargadas:", this.categoriasCargadas);
+            if (!respuesta.ok) throw new Error("No se pudo cargar el JSON");
+            const categorias = await respuesta.json();
+            console.log("Categorías cargadas:", categorias);
         } catch (error) {
             console.error("Error al cargar categorías:", error);
-            UIManager.notificar("Error al conectar con el servidor de datos", "error");
         } finally {
-            // Esto siempre se ejecuta, podrías ocultar un loader aquí
             console.log("Carga de datos finalizada.");
         }
     },
 
-    // Configurar escuchadores de eventos
     configurarEventos() {
-        // Formulario de gastos
-        const form = document.getElementById("formulario-gastos");
-        form.onsubmit = (e) => this.procesarNuevaTransaccion(e);
+        // Formulario principal
+        document.getElementById("formulario-gastos").onsubmit = (e) => this.procesarNuevaTransaccion(e);
 
-        // Guardar presupuesto
-        const btnPresu = document.getElementById("btn-guardar-presupuesto");
-        btnPresu.onclick = () => this.cambiarPresupuesto();
+        // Presupuesto
+        document.getElementById("btn-guardar-presupuesto").onclick = () => this.cambiarPresupuesto();
 
-        // Reiniciar todo
-        const btnReset = document.getElementById("btn-reiniciar-todo");
-        btnReset.onclick = () => this.reiniciarAplicacion();
+        // Logout
+        document.getElementById("btn-cerrar-sesion").onclick = () => this.cerrarSesion();
+
+        // Reiniciar datos
+        document.getElementById("btn-reiniciar-todo").onclick = () => this.reiniciarDatos();
     },
 
-    // Lógica para agregar transacción
     procesarNuevaTransaccion(e) {
         e.preventDefault();
 
-        const inputDesc = document.getElementById("input-descripcion");
-        const inputMonto = document.getElementById("input-monto");
-        const selectTipo = document.getElementById("select-tipo");
+        const descripcion = document.getElementById("input-descripcion").value.trim();
+        const monto = parseFloat(document.getElementById("input-monto").value);
+        const tipo = document.getElementById("select-tipo").value;
 
-        // VALIDACIÓN (Sugerencia del tutor: .trim() y no-cero)
-        const descripcion = inputDesc.value.trim();
-        const monto = parseFloat(inputMonto.value);
-
+        // Validaciones (sugeridas por el tutor)
         if (descripcion === "") {
             UIManager.notificar("La descripción no puede estar vacía", "error");
             return;
         }
 
         if (isNaN(monto) || monto <= 0) {
-            UIManager.notificar("El monto debe ser un número mayor a 0", "error");
+            UIManager.notificar("Ingresá un monto mayor a 0", "error");
             return;
         }
 
-        // Crear objeto de transacción
         const nueva = {
             id: Date.now(),
             descripcion: descripcion,
             monto: monto,
-            tipo: selectTipo.value
+            tipo: tipo
         };
 
-        // Actualizar estado
         this.transacciones.push(nueva);
-        StorageManager.guardarTransacciones(this.transacciones);
-
-        // Limpiar form y notificar
+        StorageManager.guardarTransacciones(this.usuario, this.transacciones);
         e.target.reset();
-        UIManager.notificar("Movimiento registrado con éxito");
-        
+        UIManager.notificar("Movimiento registrado ✓");
         this.actualizarUI();
     },
 
-    // Lógica para cambiar presupuesto
     cambiarPresupuesto() {
-        const input = document.getElementById("input-presupuesto");
-        const valor = parseFloat(input.value);
-
+        const valor = parseFloat(document.getElementById("input-presupuesto").value);
         if (!isNaN(valor) && valor >= 0) {
             this.presupuesto = valor;
-            StorageManager.guardarPresupuesto(this.presupuesto);
-            input.value = "";
-            UIManager.notificar("Presupuesto actualizado");
+            StorageManager.guardarPresupuesto(this.usuario, this.presupuesto);
+            document.getElementById("input-presupuesto").value = "";
+            UIManager.notificar("Presupuesto actualizado ✓");
             this.actualizarUI();
         } else {
-            UIManager.notificar("Ingresa un monto válido", "error");
+            UIManager.notificar("Ingresá un valor válido", "error");
         }
     },
 
-    // Lógica para eliminar una transacción
     eliminarTransaccion(id) {
         UIManager.confirmarAccion(
-            "¿Estás seguro?",
+            "¿Eliminar movimiento?",
             "Esta acción no se puede deshacer.",
             () => {
                 this.transacciones = this.transacciones.filter(t => t.id !== id);
-                StorageManager.guardarTransacciones(this.transacciones);
-                UIManager.notificar("Elemento eliminado");
+                StorageManager.guardarTransacciones(this.usuario, this.transacciones);
+                UIManager.notificar("Movimiento eliminado");
                 this.actualizarUI();
             }
         );
     },
 
-    // Lógica para reiniciar
-    reiniciarAplicacion() {
+    reiniciarDatos() {
         UIManager.confirmarAccion(
-            "¿Reiniciar todo?",
-            "Se borrarán todos los movimientos y el presupuesto.",
+            "¿Borrar todos tus datos?",
+            "Se borrará el historial y el presupuesto de tu cuenta.",
             () => {
                 this.transacciones = [];
                 this.presupuesto = 0;
-                StorageManager.limpiarTodo();
-                UIManager.notificar("Datos borrados");
+                StorageManager.limpiarUsuario(this.usuario);
+                UIManager.notificar("Datos eliminados");
                 this.actualizarUI();
             }
         );
     },
 
-    // El "motor" de renderizado
+    cerrarSesion() {
+        this.usuario = null;
+        this.transacciones = [];
+        this.presupuesto = 0;
+        document.getElementById("input-login-usuario").value = "";
+        const usuarios = StorageManager.obtenerUsuarios();
+        UIManager.renderizarUsuarios(usuarios);
+        UIManager.mostrarLogin();
+    },
+
     actualizarUI() {
-        // Calcular balance actual
-        const totalMovimientos = this.transacciones.reduce((acc, t) => {
-            return t.tipo === "ingreso" ? acc + t.monto : acc - t.monto;
-        }, 0);
-
-        const balanceTotal = this.presupuesto + totalMovimientos;
-
-        // Actualizar Cabecera
-        UIManager.actualizarCabecera(this.presupuesto, balanceTotal);
-
-        // Actualizar Lista
+        UIManager.actualizarStats(this.presupuesto, this.transacciones);
         UIManager.renderizarLista(this.transacciones, (id) => this.eliminarTransaccion(id));
     }
 };
 
-// Arrancar cuando el DOM esté listo
 document.addEventListener("DOMContentLoaded", () => {
     App.iniciar();
 });

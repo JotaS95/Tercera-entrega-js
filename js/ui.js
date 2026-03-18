@@ -3,100 +3,149 @@
  */
 
 const UIManager = {
-    // Elementos del DOM
-    selectores: {
-        contenedor: "contenedor-transacciones",
-        presupuesto: "presupuesto-valor",
-        balance: "balance-valor",
-        form: "formulario-gastos"
-    },
 
-    // Formatear moneda
     formatearMoneda(valor) {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
-            currency: 'ARS'
+            currency: 'ARS',
+            minimumFractionDigits: 2
         }).format(valor);
     },
 
-    // Actualizar los totales en el encabezado
-    actualizarCabecera(presupuesto, balance) {
-        const elPresu = document.getElementById(this.selectores.presupuesto);
-        const elBalance = document.getElementById(this.selectores.balance);
-        
-        if (elPresu) elPresu.innerText = this.formatearMoneda(presupuesto);
-        if (elBalance) {
-            elBalance.innerText = this.formatearMoneda(balance);
-            // Cambiar color si es negativo
-            elBalance.style.color = balance < 0 ? "#ff4757" : "#4a90e2";
-        }
+    // Mostrar pantalla de login u app
+    mostrarLogin() {
+        document.getElementById("login-screen").style.display = "flex";
+        document.getElementById("app-screen").style.display = "none";
     },
 
-    // Renderizar la lista de transacciones
+    mostrarApp(usuario) {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("app-screen").style.display = "block";
+        document.getElementById("navbar-nombre").innerText = usuario;
+        document.getElementById("avatar-inicial").innerText = usuario.charAt(0).toUpperCase();
+    },
+
+    // Renderizar chips de usuarios existentes
+    renderizarUsuarios(usuarios) {
+        const contenedor = document.getElementById("usuarios-existentes");
+        const chips = document.getElementById("chips-container");
+        
+        if (usuarios.length === 0) {
+            contenedor.style.display = "none";
+            return;
+        }
+
+        contenedor.style.display = "block";
+        chips.innerHTML = "";
+
+        usuarios.forEach(u => {
+            const btn = document.createElement("button");
+            btn.className = "chip-usuario";
+            btn.textContent = u;
+            btn.onclick = () => {
+                document.getElementById("input-login-usuario").value = u;
+            };
+            chips.appendChild(btn);
+        });
+    },
+
+    // Actualizar tarjetas de estadísticas
+    actualizarStats(presupuesto, transacciones) {
+        const totalIngresos = transacciones
+            .filter(t => t.tipo === "ingreso")
+            .reduce((acc, t) => acc + t.monto, 0);
+
+        const totalGastos = transacciones
+            .filter(t => t.tipo === "gasto")
+            .reduce((acc, t) => acc + t.monto, 0);
+
+        const balance = presupuesto + totalIngresos - totalGastos;
+
+        const elBalance = document.getElementById("balance-valor");
+        elBalance.innerText = this.formatearMoneda(balance);
+        elBalance.className = "stat-valor " + (balance < 0 ? "valor-negativo" : balance === 0 ? "valor-neutro" : "valor-positivo");
+
+        document.getElementById("presupuesto-valor").innerText = this.formatearMoneda(presupuesto);
+        document.getElementById("total-ingresos").innerText = this.formatearMoneda(totalIngresos);
+        document.getElementById("total-gastos").innerText = this.formatearMoneda(totalGastos);
+    },
+
+    // Renderizar historial
     renderizarLista(transacciones, onEliminar) {
-        const contenedor = document.getElementById(this.selectores.contenedor);
+        const contenedor = document.getElementById("contenedor-transacciones");
         if (!contenedor) return;
 
         contenedor.innerHTML = "";
 
         if (transacciones.length === 0) {
-            contenedor.innerHTML = `<p style="text-align:center; color:#b2bec3; margin-top:20px;">No hay movimientos aún.</p>`;
+            contenedor.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">📊</div>
+                    <p>No hay movimientos registrados todavía.</p>
+                </div>`;
             return;
         }
 
-        transacciones.forEach(t => {
+        // Mostrar del más reciente al más antiguo
+        const lista = [...transacciones].reverse();
+
+        lista.forEach(t => {
             const div = document.createElement("div");
-            div.className = `tarjeta tarjeta-${t.tipo}`;
+            div.className = `mov-card ${t.tipo}`;
             
-            const montoFormateado = this.formatearMoneda(t.monto);
-            const claseMonto = t.tipo === "gasto" ? "monto-gasto" : "monto-ingreso";
-            const signo = t.tipo === "gasto" ? "-" : "+";
+            const emoji = t.tipo === "gasto" ? "📉" : "📈";
+            const signo  = t.tipo === "gasto" ? "−" : "+";
 
             div.innerHTML = `
-                <div class="tarjeta-info">
-                    <strong>${t.descripcion}</strong>
-                    <span class="monto ${claseMonto}">${signo} ${montoFormateado}</span>
+                <div class="mov-icon">${emoji}</div>
+                <div class="mov-info">
+                    <div class="mov-descripcion">${t.descripcion}</div>
+                    <div class="mov-tipo">${t.tipo}</div>
                 </div>
-                <button class="btn-borrar" data-id="${t.id}">Borrar</button>
+                <div class="mov-monto">${signo} ${this.formatearMoneda(t.monto)}</div>
+                <button class="btn-del" data-id="${t.id}" title="Eliminar">✕</button>
             `;
-
             contenedor.appendChild(div);
-
-            // Evento para borrar (usando delegation u objeto directo)
-            div.querySelector(".btn-borrar").onclick = () => onEliminar(t.id);
+            div.querySelector(".btn-del").onclick = () => onEliminar(t.id);
         });
     },
 
-    // Mostrar notificaciones con Toastify
+    // Toast con Toastify
     notificar(mensaje, tipo = "success") {
+        const colores = {
+            success: "linear-gradient(135deg, #00b09b, #3fb950)",
+            error: "linear-gradient(135deg, #f85149, #ff6b6b)",
+            info: "linear-gradient(135deg, #58a6ff, #1f6feb)"
+        };
         Toastify({
             text: mensaje,
             duration: 3000,
             gravity: "top",
             position: "right",
             style: {
-                background: tipo === "success" ? "linear-gradient(to right, #00b09b, #96c93d)" : "linear-gradient(to right, #ff5f6d, #ffc371)",
-                borderRadius: "8px",
-                fontSize: "14px"
+                background: colores[tipo] || colores.success,
+                borderRadius: "10px",
+                fontSize: "14px",
+                fontFamily: "'Outfit', sans-serif"
             }
         }).showToast();
     },
 
-    // Confirmación con SweetAlert2
+    // Modal con SweetAlert2
     confirmarAccion(titulo, texto, callback) {
         Swal.fire({
             title: titulo,
             text: texto,
-            icon: 'warning',
+            icon: "warning",
+            background: "#161b22",
+            color: "#e6edf3",
             showCancelButton: true,
-            confirmButtonColor: '#4a90e2',
-            cancelButtonColor: '#ff4757',
-            confirmButtonText: 'Sí, confirmar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                callback();
-            }
+            confirmButtonColor: "#f85149",
+            cancelButtonColor: "#30363d",
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        }).then(result => {
+            if (result.isConfirmed) callback();
         });
     }
 };
