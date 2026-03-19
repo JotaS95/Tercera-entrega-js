@@ -57,11 +57,7 @@ const UIManager = {
             const item = document.createElement("div");
             item.className = `mov-card ${t.tipo}`;
             item.innerHTML = `
-                <div class="mov-icon">${t.tipo === 'gasto' ? '💸' : '💰'}</div>
-                <div class="mov-info">
-                    <span class="mov-descripcion">${t.descripcion}</span>
-                    <div class="mov-meta">${this.formatearFecha(t.id)}</div>
-                </div>
+                <span class="mov-descripcion">${t.descripcion}</span>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span class="mov-monto ${t.tipo === 'gasto' ? 'valor-negativo' : 'valor-positivo'}">${t.tipo === 'gasto' ? '-' : '+'}${this.formatearMoneda(t.monto)}</span>
                     <button class="btn-del">✕</button>

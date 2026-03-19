@@ -24,12 +24,16 @@ const App = {
         this.actualizarUI();
         this.configurarEventos();
 
+        const fallback = ["Alquiler", "Sueldo", "Comida", "Transporte", "Servicios", "Venta", "Entretenimiento", "Salud"];
         try {
             const res = await fetch("data/transacciones.json");
+            if (!res.ok) throw new Error("No se pudo cargar el JSON");
             const data = await res.json();
-            console.log("Categorías cargadas:", data);
+            this.poblarDatalist(data.map(c => c.nombre));
+            console.log("Categorías cargadas desde JSON:", data);
         } catch (e) {
-            console.error("Error cargando categorías:", e);
+            console.warn("fetch bloqueado (file://), usando categorías por defecto:", e.message);
+            this.poblarDatalist(fallback);
         }
     },
 
@@ -108,6 +112,12 @@ const App = {
             UIManager.notificar("App reseteada", "success");
             window.location.reload();
         });
+    },
+
+    poblarDatalist(nombres) {
+        const datalist = document.getElementById("lista-categorias");
+        if (!datalist) return;
+        datalist.innerHTML = nombres.map(n => `<option value="${n}">`).join("");
     },
 
     actualizarUI() {
