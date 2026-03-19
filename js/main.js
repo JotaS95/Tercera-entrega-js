@@ -35,7 +35,16 @@ const App = {
 
     configurarEventos() {
         document.getElementById("formulario-gastos").onsubmit = (e) => this.procesarNuevaTransaccion(e);
-        document.getElementById("btn-guardar-presupuesto").onclick = () => this.cambiarPresupuesto();
+        
+        // Guardar presupuesto (clic)
+        const btnPresu = document.getElementById("btn-guardar-presupuesto");
+        btnPresu.onclick = () => this.cambiarPresupuesto();
+        
+        // Guardar presupuesto (Enter)
+        document.getElementById("input-presupuesto").onkeydown = (e) => {
+            if (e.key === "Enter") this.cambiarPresupuesto();
+        };
+
         document.getElementById("btn-reiniciar-todo").onclick = () => this.borrarTodo();
     },
 
@@ -60,15 +69,27 @@ const App = {
     },
 
     cambiarPresupuesto() {
-        const valorRaw = document.getElementById("input-presupuesto").value;
-        const valor = parseFloat(valorRaw.replace(",", "."));
+        const input = document.getElementById("input-presupuesto");
+        const valor = this.parsearMonto(input.value);
         if (!isNaN(valor) && valor >= 0) {
             this.presupuesto = valor;
             StorageManager.guardarPresupuesto(valor);
-            document.getElementById("input-presupuesto").value = "";
-            UIManager.notificar("Presupuesto guardado");
+            input.value = "";
+            UIManager.notificar("Presupuesto guardado ✓");
             this.actualizarUI();
+        } else {
+            UIManager.notificar("Monto inválido (ej: 5000)", "error");
         }
+    },
+
+    // Normalizar montos: acepta 1500 | 1500.50 | 1500,50
+    parsearMonto(valor) {
+        let raw = String(valor).trim();
+        raw = raw.replace(",", ".");
+        if (/^\d+\.\d{3}$/.test(raw)) {
+            raw = raw.replace(".", "");
+        }
+        return parseFloat(raw);
     },
 
     eliminarTransaccion(id) {
