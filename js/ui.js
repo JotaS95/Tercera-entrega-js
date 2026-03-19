@@ -51,54 +51,24 @@ const UIManager = {
             return;
         }
 
-        const ordenadas = [...transacciones].sort((a,b) => b.id - a.id);
-        const meses = {};
+        const ordenadas = [...transacciones].sort((a, b) => b.id - a.id);
 
         ordenadas.forEach(t => {
-            const f = new Date(t.id);
-            const claveMes = `${f.getFullYear()}-${f.getMonth()}`;
-            const nombreMes = f.toLocaleString("es-AR", { month: "long", year: "numeric" });
-            if (!meses[claveMes]) meses[claveMes] = { nombre: nombreMes, items: [] };
-            meses[claveMes].items.push(t);
-        });
-
-        Object.keys(meses).forEach((k, idx) => {
-            const mes = meses[k];
-            const block = document.createElement("div");
-            block.className = "mes-grupo";
-            
-            const header = document.createElement("div");
-            header.className = `mes-header ${idx === 0 ? "abierto" : "cerrado"}`;
-            header.innerHTML = `<span>${mes.nombre}</span><span>▼</span>`;
-            header.onclick = () => {
-                header.classList.toggle("abierto");
-                header.classList.toggle("cerrado");
-            };
-
-            const content = document.createElement("div");
-            content.className = "mes-contenido";
-
-            mes.items.forEach(t => {
-                const item = document.createElement("div");
-                item.className = `mov-card ${t.tipo}`;
-                item.innerHTML = `
-                    <div class="mov-icon">${t.tipo === 'gasto' ? '💸' : '💰'}</div>
-                    <div class="mov-info">
-                        <span class="mov-descripcion">${t.descripcion}</span>
-                        <div class="mov-meta">${this.formatearFecha(t.id)}</div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="mov-monto ${t.tipo === 'gasto' ? 'valor-negativo' : 'valor-positivo'}">${t.tipo === 'gasto' ? '-' : '+'}${this.formatearMoneda(t.monto)}</span>
-                        <button class="btn-del">✕</button>
-                    </div>
-                `;
-                item.querySelector(".btn-del").onclick = () => onEliminar(t.id);
-                content.appendChild(item);
-            });
-
-            block.appendChild(header);
-            block.appendChild(content);
-            contenedor.appendChild(block);
+            const item = document.createElement("div");
+            item.className = `mov-card ${t.tipo}`;
+            item.innerHTML = `
+                <div class="mov-icon">${t.tipo === 'gasto' ? '💸' : '💰'}</div>
+                <div class="mov-info">
+                    <span class="mov-descripcion">${t.descripcion}</span>
+                    <div class="mov-meta">${this.formatearFecha(t.id)}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="mov-monto ${t.tipo === 'gasto' ? 'valor-negativo' : 'valor-positivo'}">${t.tipo === 'gasto' ? '-' : '+'}${this.formatearMoneda(t.monto)}</span>
+                    <button class="btn-del">✕</button>
+                </div>
+            `;
+            item.querySelector(".btn-del").onclick = () => onEliminar(t.id);
+            contenedor.appendChild(item);
         });
     },
 
