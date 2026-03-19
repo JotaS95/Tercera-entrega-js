@@ -68,7 +68,7 @@ const App = {
         document.getElementById("formulario-gastos").onsubmit = (e) => this.procesarNuevaTransaccion(e);
         document.getElementById("btn-guardar-presupuesto").onclick = () => this.cambiarPresupuesto();
         document.getElementById("btn-cerrar-sesion").onclick = () => this.cerrarSesion();
-        document.getElementById("btn-reiniciar-todo").onclick = () => this.reiniciarDatos();
+        document.getElementById("btn-reiniciar-todo").onclick = () => this.solicitarLimpieza();
     },
 
     procesarNuevaTransaccion(e) {
@@ -147,18 +147,38 @@ const App = {
         );
     },
 
-    reiniciarDatos() {
-        UIManager.confirmarAccion(
-            "¿Borrar todos tus datos?",
-            "Se borrará el historial y el presupuesto de tu cuenta.",
-            () => {
-                this.transacciones = [];
-                this.presupuesto = 0;
-                StorageManager.limpiarUsuario(this.usuario);
-                UIManager.notificar("Datos eliminados");
+    solicitarLimpieza() {
+        UIManager.mostrarPanelLimpieza((opcion) => {
+            let mensaje = "";
+            let confirmacionRequerida = true;
+
+            switch(opcion) {
+                case "historial":
+                    this.transacciones = [];
+                    mensaje = "Historial borrado";
+                    break;
+                case "presupuesto":
+                    this.presupuesto = 0;
+                    mensaje = "Presupuesto reiniciado a $0";
+                    break;
+                case "gastos":
+                    this.transacciones = this.transacciones.filter(t => t.tipo === "ingreso");
+                    mensaje = "Se eliminaron todos los gastos";
+                    break;
+                case "todo":
+                    this.transacciones = [];
+                    this.presupuesto = 0;
+                    mensaje = "Todos los datos han sido borrados";
+                    break;
+            }
+
+            if (mensaje) {
+                StorageManager.guardarTransacciones(this.usuario, this.transacciones);
+                StorageManager.guardarPresupuesto(this.usuario, this.presupuesto);
+                UIManager.notificar(mensaje);
                 this.actualizarUI();
             }
-        );
+        });
     },
 
     confirmarEliminarUsuario(nombre) {

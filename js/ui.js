@@ -258,8 +258,38 @@ const UIManager = {
             showCancelButton: true,
             confirmButtonColor: "#ef233c",
             cancelButtonColor: "#8892a4",
-            confirmButtonText: "Sí, eliminar",
+            confirmButtonText: "Sí, continuar",
             cancelButtonText: "Cancelar"
         }).then(result => { if (result.isConfirmed) callback(); });
+    },
+
+    // Panel de Limpieza Inteligente (Surprising feature)
+    mostrarPanelLimpieza(callback) {
+        Swal.fire({
+            title: "🧹 Limpieza Inteligente",
+            text: "¿Qué parte de tu información querés borrar?",
+            icon: "info",
+            showCancelButton: true,
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#4361ee",
+            input: "radio",
+            inputOptions: {
+                "historial": "Solo el historial de transacciones",
+                "presupuesto": "Solo el presupuesto (poner a $0)",
+                "gastos": "Solo los gastos (mantener ingresos)",
+                "todo": "Borrar todo (reinicio completo)"
+            },
+            inputValidator: (value) => {
+                if (!value) return "¡Tenés que elegir una opción!";
+            },
+            customClass: {
+                popup: 'glass-modal',
+                confirmButton: 'btn-swal-confirm'
+            }
+        }).then(result => {
+            if (result.isConfirmed) {
+                callback(result.value);
+            }
+        });
     }
 };
