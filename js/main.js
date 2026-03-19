@@ -1,235 +1,99 @@
 /**
- * main.js - Lógica principal y orquestación
+ * main.js - Acceso Directo Profesional Simplificado
  */
 
 const App = {
-    usuario: null,
+    usuario: "Mi Cuenta",
     transacciones: [],
     presupuesto: 0,
 
-    async iniciar() {
-        const usuarios = StorageManager.obtenerUsuarios();
-        UIManager.renderizarUsuarios(usuarios,
-            (u) => this.seleccionarUsuario(u),
-            (u) => this.confirmarEliminarUsuario(u)
-        );
-
-        document.getElementById("btn-ingresar").onclick = () => this.login();
-        document.getElementById("input-login-usuario").onkeydown = (e) => {
-            if (e.key === "Enter") this.login();
-        };
+    iniciar() {
+        this.cargarDatos();
     },
 
-    login() {
-        const input = document.getElementById("input-login-usuario");
-        const nombre = input.value.trim();
-
-        if (nombre === "") {
-            UIManager.notificar("Ingresá tu nombre para continuar", "error");
-            return;
+    async cargarDatos() {
+        this.transacciones = StorageManager.obtenerTransacciones();
+        this.presupuesto = StorageManager.obtenerPresupuesto();
+        
+        // Mostrar fecha actual en el header
+        const elFecha = document.getElementById("header-fecha");
+        if (elFecha) {
+            elFecha.innerText = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
         }
 
-        this.seleccionarUsuario(nombre);
-    },
-
-    seleccionarUsuario(nombre) {
-        this.usuario = nombre;
-        StorageManager.registrarUsuario(nombre);
-        this.cargarDatosUsuario();
-    },
-
-    async cargarDatosUsuario() {
-        await this.cargarCategorias();
-
-        this.transacciones = StorageManager.obtenerTransacciones(this.usuario);
-        this.presupuesto = StorageManager.obtenerPresupuesto(this.usuario);
-
-        UIManager.mostrarApp(this.usuario);
-        UIManager.notificar(`¡Bienvenido, ${this.usuario}! 👋`, "info");
-
-        this.configurarEventos();
         this.actualizarUI();
-    },
+        this.configurarEventos();
 
-    async cargarCategorias() {
         try {
-            const respuesta = await fetch("data/transacciones.json");
-            if (!respuesta.ok) throw new Error("No se pudo cargar el JSON");
-            const categorias = await respuesta.json();
-            console.log("Categorías cargadas:", categorias);
-        } catch (error) {
-            console.error("Error al cargar categorías:", error);
-        } finally {
-            console.log("Carga de datos finalizada.");
+            const res = await fetch("data/transacciones.json");
+            const data = await res.json();
+            console.log("Categorías cargadas:", data);
+        } catch (e) {
+            console.error("Error cargando categorías:", e);
         }
     },
 
     configurarEventos() {
         document.getElementById("formulario-gastos").onsubmit = (e) => this.procesarNuevaTransaccion(e);
         document.getElementById("btn-guardar-presupuesto").onclick = () => this.cambiarPresupuesto();
-        document.getElementById("btn-cerrar-sesion").onclick = () => this.cerrarSesion();
-        document.getElementById("btn-reiniciar-todo").onclick = () => this.solicitarLimpieza();
+        document.getElementById("btn-reiniciar-todo").onclick = () => this.borrarTodo();
     },
 
     procesarNuevaTransaccion(e) {
         e.preventDefault();
-
         const descripcion = document.getElementById("input-descripcion").value.trim();
-        const monto = this.parsearMonto(document.getElementById("input-monto").value);
+        const montoRaw = document.getElementById("input-monto").value;
+        const monto = parseFloat(montoRaw.replace(",", "."));
         const tipo = document.getElementById("select-tipo").value;
 
-        if (descripcion === "") {
-            UIManager.notificar("La descripción no puede estar vacía", "error");
+        if (!descripcion || isNaN(monto) || monto <= 0) {
+            UIManager.notificar("Datos inválidos", "error");
             return;
         }
 
-        if (isNaN(monto) || monto <= 0) {
-            UIManager.notificar("Monto inválido. Ingresá solo números (ej: 1500). No uses puntos para los miles.", "error");
-            return;
-        }
-
-        const nueva = {
-            id: Date.now(),
-            descripcion: descripcion,
-            monto: monto,
-            tipo: tipo
-        };
-
+        const nueva = { id: Date.now(), descripcion, monto, tipo };
         this.transacciones.push(nueva);
-        StorageManager.guardarTransacciones(this.usuario, this.transacciones);
+        StorageManager.guardarTransacciones(this.transacciones);
         e.target.reset();
-        UIManager.notificar("Movimiento registrado ✓");
+        UIManager.notificar("Registro exitoso ✓");
         this.actualizarUI();
     },
 
-    // Normalizar montos: acepta 1500 | 1500.50 | 1500,50
-    parsearMonto(valor) {
-        let raw = String(valor).trim();
-        // Reemplazamos coma por punto para que JS lo entienda como decimal
-        raw = raw.replace(",", ".");
-        
-        // Si el usuario puso un punto y le siguen exactamente 3 ceros (ej: 1.000)
-        // en Argentina suele ser "mil", pero en JS es "uno".
-        // Vamos a ser proactivos: si sospechamos que quiso poner miles con punto,
-        // lo corregimos, pero el hint ya les avisa que no lo hagan.
-        if (/^\d+\.\d{3}$/.test(raw)) {
-            // Es muy probable que sea un punto de miles (ej: 1.000 o 10.000)
-            raw = raw.replace(".", "");
-        }
-        
-        return parseFloat(raw);
-    },
-
     cambiarPresupuesto() {
-        const valor = this.parsearMonto(document.getElementById("input-presupuesto").value);
-
+        const valorRaw = document.getElementById("input-presupuesto").value;
+        const valor = parseFloat(valorRaw.replace(",", "."));
         if (!isNaN(valor) && valor >= 0) {
             this.presupuesto = valor;
-            StorageManager.guardarPresupuesto(this.usuario, this.presupuesto);
+            StorageManager.guardarPresupuesto(valor);
             document.getElementById("input-presupuesto").value = "";
-            UIManager.notificar("Presupuesto actualizado ✓");
+            UIManager.notificar("Presupuesto guardado");
             this.actualizarUI();
-        } else {
-            UIManager.notificar("Ingresá un valor válido", "error");
         }
     },
 
     eliminarTransaccion(id) {
-        UIManager.confirmarAccion(
-            "¿Eliminar movimiento?",
-            "Esta acción no se puede deshacer.",
-            () => {
-                this.transacciones = this.transacciones.filter(t => t.id !== id);
-                StorageManager.guardarTransacciones(this.usuario, this.transacciones);
-                UIManager.notificar("Movimiento eliminado");
-                this.actualizarUI();
-            }
-        );
-    },
-
-    solicitarLimpieza() {
-        UIManager.mostrarPanelLimpieza((opcion) => {
-            let mensaje = "";
-            let confirmacionRequerida = true;
-
-            switch(opcion) {
-                case "historial":
-                    this.transacciones = [];
-                    mensaje = "Historial borrado";
-                    break;
-                case "presupuesto":
-                    this.presupuesto = 0;
-                    mensaje = "Presupuesto reiniciado a $0";
-                    break;
-                case "gastos":
-                    this.transacciones = this.transacciones.filter(t => t.tipo === "ingreso");
-                    mensaje = "Se eliminaron todos los gastos";
-                    break;
-                case "todo":
-                    this.transacciones = [];
-                    this.presupuesto = 0;
-                    mensaje = "Todos los datos han sido borrados";
-                    break;
-            }
-
-            if (mensaje) {
-                StorageManager.guardarTransacciones(this.usuario, this.transacciones);
-                StorageManager.guardarPresupuesto(this.usuario, this.presupuesto);
-                UIManager.notificar(mensaje);
-                this.actualizarUI();
-            }
+        UIManager.confirmarAccion("¿Eliminar movimiento?", "No podrás deshacerlo", () => {
+            this.transacciones = this.transacciones.filter(t => t.id !== id);
+            StorageManager.guardarTransacciones(this.transacciones);
+            this.actualizarUI();
         });
     },
 
-    confirmarEliminarUsuario(nombre) {
-        UIManager.confirmarAccion(
-            `¿Eliminar usuario "${nombre}"?`,
-            "Se borrarán todos sus datos y el historial. Esta acción no se puede deshacer.",
-            () => {
-                StorageManager.eliminarUsuario(nombre);
-                UIManager.notificar(`Usuario "${nombre}" eliminado`, "error");
-                // Refrescar los chips
-                const usuarios = StorageManager.obtenerUsuarios();
-                UIManager.renderizarUsuarios(usuarios,
-                    (u) => this.seleccionarUsuario(u),
-                    (u) => this.confirmarEliminarUsuario(u)
-                );
-            }
-        );
-    },
-
-    cerrarSesion() {
-        this.usuario = null;
-        this.transacciones = [];
-        this.presupuesto = 0;
-        document.getElementById("input-login-usuario").value = "";
-        const usuarios = StorageManager.obtenerUsuarios();
-        UIManager.renderizarUsuarios(usuarios,
-            (u) => this.seleccionarUsuario(u),
-            (u) => this.confirmarEliminarUsuario(u)
-        );
-        UIManager.mostrarLogin();
+    borrarTodo() {
+        UIManager.confirmarAccion("¿Limpiar todo?", "Se borrará el historial y presupuesto.", () => {
+            StorageManager.limpiarTodo();
+            this.transacciones = [];
+            this.presupuesto = 0;
+            UIManager.notificar("App reseteada", "success");
+            window.location.reload();
+        });
     },
 
     actualizarUI() {
-        const { balance, totalGastos } = UIManager.actualizarStats(this.presupuesto, this.transacciones);
+        const { totalGastos } = UIManager.actualizarStats(this.presupuesto, this.transacciones);
         UIManager.renderizarLista(this.transacciones, (id) => this.eliminarTransaccion(id));
-
-        const pct = UIManager.actualizarProgreso(this.presupuesto, totalGastos);
-
-        // Alertas de presupuesto (solo si hay presupuesto definido)
-        if (this.presupuesto > 0 && pct !== undefined) {
-            if (balance < 0) {
-                UIManager.notificar("⛔ ¡Superaste el presupuesto!", "error");
-            } else if (pct >= 90) {
-                UIManager.notificar("🔴 Atención: usaste más del 90% del presupuesto", "error");
-            } else if (pct >= 70 && pct < 90) {
-                UIManager.notificar("🟡 Vas por el 70% del presupuesto", "info");
-            }
-        }
+        UIManager.actualizarProgreso(this.presupuesto, totalGastos);
     }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-    App.iniciar();
-});
+document.addEventListener("DOMContentLoaded", () => App.iniciar());

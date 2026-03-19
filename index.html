@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Billetera Virtual - ProyectoFinal+Silva</title>
+    <title>Billetera Virtual - Versión Estándar</title>
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -12,68 +12,40 @@
     <!-- Estilos Propios -->
     <link rel="stylesheet" href="css/estilos.css">
 
-    <!-- Librerías Externas (primero) -->
+    <!-- Librerías Externas -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-    <!-- Scripts propios (Sin Módulos) -->
+    <!-- Scripts propios -->
     <script defer src="js/storage.js"></script>
     <script defer src="js/ui.js"></script>
     <script defer src="js/main.js"></script>
 </head>
 <body class="mesh-bg">
 
-    <!-- PANTALLA DE LOGIN -->
-    <div id="login-screen">
-        <div class="login-box">
-            <div class="login-logo">💼</div>
-            <h2>Billetera Virtual</h2>
-            <p class="login-subtitle">Tu gestor de finanzas personales</p>
-
-            <div class="login-form-group">
-                <label>Nombre de usuario</label>
-                <input type="text" id="input-login-usuario" placeholder="Ej: Jonathan" autocomplete="off">
-            </div>
-            <button class="btn-login" id="btn-ingresar">Ingresar →</button>
-
-            <div id="usuarios-existentes" style="display:none;">
-                <p class="usuarios-lista-titulo">Usuarios guardados</p>
-                <div class="usuarios-chips" id="chips-container"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- APP PRINCIPAL -->
+    <!-- APP PRINCIPAL - ACCESO DIRECTO -->
     <div id="app-screen">
-        <!-- Navbar -->
         <nav class="navbar">
-            <span class="navbar-brand">💼 Billetera</span>
-            <div class="navbar-user">
-                <div class="avatar" id="avatar-inicial">?</div>
-                <span id="navbar-nombre">Usuario</span>
-                <button class="btn-logout" id="btn-cerrar-sesion">Salir</button>
+            <div class="navbar-content">
+                <span class="navbar-brand">💼 Mi Billetera</span>
+                <div class="navbar-right">
+                    <span id="header-fecha" class="header-date">Cargando fecha...</span>
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Online</span>
+                    </div>
+                </div>
             </div>
         </nav>
 
-        <div class="app-container">
-            <!-- Sidebar Izquierdo: Historial -->
-            <aside class="sidebar-historial">
-                <div class="sidebar-header">
-                    <p class="card-title" style="margin:0; border:none; padding:0;">📋 Historial</p>
+        <div class="app-centered-container">
+            <!-- Estadísticas (Original Style) -->
+            <section class="stats-section">
+                <div class="stat-card principal">
+                    <div class="stat-label">Balance Actual</div>
+                    <div class="stat-valor" id="balance-valor">$0</div>
                 </div>
-                <div class="history-list" id="contenedor-transacciones">
-                    <!-- Dinámico desde JS -->
-                </div>
-            </aside>
-
-            <!-- Contenido Principal: Stats y Form -->
-            <main class="main-content">
-                <!-- Estadísticas -->
                 <div class="stats-grid">
-                    <div class="stat-card principal">
-                        <div class="stat-label">Balance Actual</div>
-                        <div class="stat-valor valor-neutro" id="balance-valor">$0</div>
-                    </div>
                     <div class="stat-card">
                         <div class="stat-icon">🏦</div>
                         <div class="stat-label">Presupuesto</div>
@@ -90,62 +62,64 @@
                         <div class="stat-valor valor-negativo" id="total-gastos">$0</div>
                     </div>
                 </div>
+            </section>
 
-
-                <!-- Configuración de Presupuesto -->
-                <div class="card">
-                    <p class="card-title">💰 Definir Presupuesto</p>
-                    <div class="form-row-presupuesto">
-                        <div style="flex:1">
-                            <input type="text" id="input-presupuesto" placeholder="Ej: 50000" inputmode="decimal">
-                            <small class="input-hint">Ingresá el monto sin puntos de miles (ej: 5000)</small>
-                        </div>
-                        <button class="btn-secondary" id="btn-guardar-presupuesto">Guardar</button>
+            <!-- Definir Presupuesto -->
+            <div class="card">
+                <p class="card-title">💰 Definir Presupuesto</p>
+                <div class="form-row-presupuesto">
+                    <div style="flex:1">
+                        <input type="text" id="input-presupuesto" placeholder="Ej: 50000" inputmode="decimal">
+                        <small class="input-hint">Monto sin puntos de miles (ej: 5000)</small>
                     </div>
+                    <button class="btn-secondary" id="btn-guardar-presupuesto">Guardar</button>
                 </div>
-
-                <!-- Barra de Presupuesto -->
-                <div class="card" id="card-progreso" style="display:none;">
+                <!-- Barra de Progreso -->
+                <div id="card-progreso" style="display:none; margin-top: 20px;">
                     <div class="progreso-header">
-                        <span class="card-title" style="margin:0; border:none; padding:0;">📊 Uso del Presupuesto</span>
                         <span class="progreso-restante" id="progreso-restante-label">$0 restantes</span>
+                        <span id="progreso-pct">0% usado</span>
                     </div>
                     <div class="barra-container">
                         <div class="barra-fill" id="barra-fill"></div>
                     </div>
-                    <div class="progreso-footer">
-                        <span id="progreso-pct">0% usado</span>
-                        <span id="progreso-total"></span>
+                </div>
+            </div>
+
+            <!-- Nueva Transacción -->
+            <div class="card">
+                <p class="card-title">＋ Nueva Transacción</p>
+                <form id="formulario-gastos">
+                    <div class="form-row">
+                        <input type="text" id="input-descripcion" placeholder="Descripción (ej: Supermercado)">
                     </div>
-                </div>
-
-                <!-- Formulario -->
-                <div class="card">
-                    <p class="card-title">＋ Nueva Transacción</p>
-                    <form id="formulario-gastos">
-                        <div class="form-row">
-                            <input type="text" id="input-descripcion" placeholder="Descripción (ej: Supermercado)">
+                    <div class="form-row form-row-2">
+                        <div>
+                            <input type="text" id="input-monto" placeholder="Ej: 1250.50" inputmode="decimal">
+                            <small class="input-hint">Punto para decimales</small>
                         </div>
-                        <div class="form-row form-row-2">
-                            <div>
-                                <input type="text" id="input-monto" placeholder="Ej: 1250.50" inputmode="decimal">
-                                <small class="input-hint">Usá solo números (punto para decimales)</small>
-                            </div>
-                            <select id="select-tipo">
-                                <option value="gasto">💸 Gasto</option>
-                                <option value="ingreso">💰 Ingreso</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn-primary">Registrar Movimiento</button>
-                    </form>
-                </div>
+                        <select id="select-tipo">
+                            <option value="gasto">💸 Gasto</option>
+                            <option value="ingreso">💰 Ingreso</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Registrar Movimiento</button>
+                </form>
+            </div>
 
-                <!-- Acciones Avanzadas -->
-                <div class="card">
-                    <p class="card-title">⚠️ Zona Peligrosa</p>
-                    <button class="btn-danger-outline" id="btn-reiniciar-todo" style="width: 100%;">🧹 Limpieza Inteligente de Datos</button>
+            <!-- Zona de Borrado -->
+            <div class="card">
+                <p class="card-title">⚠️ Zona de Limpieza</p>
+                <button class="btn-danger-outline" id="btn-reiniciar-todo" style="width: 100%;">🧹 Borrar Todo</button>
+            </div>
+
+            <!-- Historial al Final -->
+            <section class="section-historial">
+                <h3 class="section-title">📋 Historial de Movimientos</h3>
+                <div class="history-list-centered" id="contenedor-transacciones">
+                    <!-- Dinámico -->
                 </div>
-            </main>
+            </section>
         </div>
     </div>
 
